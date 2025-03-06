@@ -1,11 +1,29 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const jwtService = require("./jwtService");
+const { Op } = require("sequelize");
+const { ROLES } = require("../constants/role");
 
 const register = async (username, email, password) => {
-  const existingUser = await User.findOne({ where: { email } });
+  const existingUser = await User.findOne({ 
+    where: { 
+      [Op.or]: [
+        { username },
+        { email }
+      ]
+    }
+  });
   if (existingUser) {
-    throw new Error("Email already exists");
+    if (existingUser.username === username) {
+      throw new Error("Username already exists");
+    }
+    if (existingUser.email === email) {
+      throw new Error("Email already exists"); 
+    }
+  }
+
+  if (!password || password.length < 6) {
+    throw new Error("Password must be at least 6 characters long");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -14,6 +32,7 @@ const register = async (username, email, password) => {
     username,
     email,
     password: hashedPassword,
+    role: ROLES.USER,
   });
 
   return newUser;

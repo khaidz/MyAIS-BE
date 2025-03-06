@@ -1,0 +1,103 @@
+extends layout
+
+block content
+  .chat-container
+    h1 Real-time Chat
+    #messages.messages-container
+    .input-container
+      input#messageInput(type="text" placeholder="Type your message...")
+      button#sendButton Send
+
+  script(src="/socket.io/socket.io.js")
+  script.
+    const socket = io();
+
+    const messagesContainer = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+
+    // Handle connection events
+    socket.on('connect', () => {
+      console.log('Connected to WebSocket server');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      alert('Failed to connect to chat server.');
+    });
+
+    // Handle incoming messages
+    socket.on('message', (data) => {
+      const messageElement = document.createElement('div');
+      messageElement.className = 'message';
+      messageElement.innerHTML = `
+        <strong>User ${data.userId}:</strong> ${data.message}
+      `;
+      messagesContainer.appendChild(messageElement);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+
+    // Send message function
+    function sendMessage() {
+      const message = messageInput.value.trim();
+      if (message) {
+        socket.emit('message', message);
+        messageInput.value = '';
+      }
+    }
+
+    // Event listeners
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+  style.
+    .chat-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .messages-container {
+      height: 400px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 20px;
+      margin-bottom: 20px;
+      overflow-y: auto;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 8px;
+      background-color: #f0f0f0;
+      border-radius: 4px;
+    }
+
+    .input-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    #messageInput {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    #sendButton {
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #sendButton:hover {
+      background-color: #0056b3;
+    } 
